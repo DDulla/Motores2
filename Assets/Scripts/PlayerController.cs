@@ -1,13 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private Slider healthSlider;
-    [SerializeField] private TMPro.TextMeshProUGUI timerText;
+    [SerializeField] private TMP_Text timerText;
+    [SerializeField] private ResultsManager resultsManager;
     public int maxHealth = 10;
     public int currentHealth;
     private Vector2 moveInput;
@@ -28,7 +30,6 @@ public class PlayerController : MonoBehaviour
             healthSlider.value = maxHealth;
         }
     }
-
     private void Update()
     {
         rb.velocity = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
@@ -38,7 +39,13 @@ public class PlayerController : MonoBehaviour
         {
             int minutes = Mathf.FloorToInt(elapsedTime / 60f);
             int seconds = Mathf.FloorToInt(elapsedTime % 60f);
-            timerText.text = "Time: " + minutes + " . " + seconds;
+            timerText.text = "Time: " + minutes + "." + seconds;
+        }
+
+        if (elapsedTime >= 70f) 
+        {
+            resultsManager.ShowResults("¡Ganaste!", elapsedTime);
+            enabled = false; 
         }
     }
 
@@ -84,7 +91,8 @@ public class PlayerController : MonoBehaviour
         if (currentHealth <= 0)
         {
             currentHealth = 0;
-            Debug.Log("Game Over!");
+            resultsManager.ShowResults("Perdiste", elapsedTime);
+            enabled = false; 
         }
 
         if (healthSlider != null)
