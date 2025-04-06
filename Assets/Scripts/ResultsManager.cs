@@ -7,14 +7,26 @@ public class ResultsManager : MonoBehaviour
     [SerializeField] private GameObject resultsPanel;
     [SerializeField] private TMP_Text resultText;
     [SerializeField] private TMP_Text timeText;
+    [SerializeField] private TMP_Text scoreText;
 
-    public void ShowResults(string result, float elapsedTime)
+    private float elapsedTime;
+    private int score;
+
+    public void SetGameData(float time, int points)
+    {
+        elapsedTime = time;
+        score = points;
+    }
+
+    public void ShowResults(string result)
     {
         resultText.text = result;
 
         int minutes = Mathf.FloorToInt(elapsedTime / 60f);
         int seconds = Mathf.FloorToInt(elapsedTime % 60f);
-        timeText.text = "Time: " + minutes + "." + seconds;
+        timeText.text = "Time: " + minutes + ":" + seconds;
+
+        scoreText.text = "Score: " + score;
 
         resultsPanel.SetActive(true);
         Time.timeScale = 0f; 
@@ -22,13 +34,13 @@ public class ResultsManager : MonoBehaviour
 
     public void GoToMenu()
     {
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }
 
     public void RetryLevel()
     {
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

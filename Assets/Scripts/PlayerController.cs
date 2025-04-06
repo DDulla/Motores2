@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Events;
 
 public class PlayerController : MonoBehaviour
 {
@@ -10,8 +11,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Slider healthSlider;
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private ResultsManager resultsManager;
+
+    public UnityEvent<int> OnLifeChanged;
+    public UnityEvent<int> OnScoreChanged;
+    public UnityEvent<string> OnGameEnd;
+
     public int maxHealth = 10;
     public int currentHealth;
+    private int score = 0;
     private Vector2 moveInput;
     public Rigidbody2D rb;
     public SpriteRenderer spriteRenderer;
@@ -30,6 +37,7 @@ public class PlayerController : MonoBehaviour
             healthSlider.value = maxHealth;
         }
     }
+
     private void Update()
     {
         rb.velocity = new Vector2(moveInput.x * moveSpeed, rb.velocity.y);
@@ -42,10 +50,12 @@ public class PlayerController : MonoBehaviour
             timerText.text = "Time: " + minutes + "." + seconds;
         }
 
-        if (elapsedTime >= 70f) 
+        if (elapsedTime >= 70f)
         {
-            resultsManager.ShowResults("¡Ganaste!", elapsedTime);
-            enabled = false; 
+            resultsManager.SetGameData(elapsedTime, score); 
+            resultsManager.ShowResults("You win"); 
+            OnGameEnd?.Invoke("You win"); 
+            enabled = false;
         }
     }
 
@@ -87,18 +97,49 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int amount)
     {
         currentHealth -= amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        OnLifeChanged?.Invoke(currentHealth);
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0) 
         {
-            currentHealth = 0;
-            resultsManager.ShowResults("Perdiste", elapsedTime);
-            enabled = false; 
+            resultsManager.SetGameData(elapsedTime, score); 
+            resultsManager.ShowResults("Defeat"); 
+            OnGameEnd?.Invoke("Defeat"); 
+            enabled = false;
         }
 
         if (healthSlider != null)
         {
             healthSlider.value = currentHealth;
         }
+    }
+
+    public void Heal(int amount)
+    {
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        OnLifeChanged?.Invoke(currentHealth);
+
+        if (healthSlider != null)
+        {
+            healthSlider.value = currentHealth;
+        }
+    }
+
+    public void AddScore(int points)
+    {
+        score += points;
+        OnScoreChanged?.Invoke(score);
+    }
+
+    public int GetCurrentScore()
+    {
+        return score;
+    }
+
+    public float GetElapsedTime()
+    {
+        return elapsedTime;
     }
 
     public void ChangeToRed()
