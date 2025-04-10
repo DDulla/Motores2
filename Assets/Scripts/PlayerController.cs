@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Events;
+using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Slider healthSlider;
     [SerializeField] private TMP_Text timerText;
     [SerializeField] private ResultsManager resultsManager;
+    [SerializeField] public List<MonoBehaviour> enemies;
 
     public UnityEvent<int> OnLifeChanged;
     public UnityEvent<int> OnScoreChanged;
@@ -23,9 +25,12 @@ public class PlayerController : MonoBehaviour
     public Rigidbody2D rb;
     public SpriteRenderer spriteRenderer;
     private int jumpCount = 2;
-    private bool canChangeColor = true;
+
+    private Color[] colors = { Color.red, Color.green, Color.blue };
+    private int currentColorIndex = 0;
 
     private float elapsedTime = 0f;
+    private bool canChangeColor = true;
 
     private void Awake()
     {
@@ -36,6 +41,8 @@ public class PlayerController : MonoBehaviour
             healthSlider.maxValue = maxHealth;
             healthSlider.value = maxHealth;
         }
+
+        spriteRenderer.color = colors[currentColorIndex];
     }
 
     private void Update()
@@ -52,9 +59,9 @@ public class PlayerController : MonoBehaviour
 
         if (elapsedTime >= 70f)
         {
-            resultsManager.SetGameData(elapsedTime, score); 
-            resultsManager.ShowResults("You win"); 
-            OnGameEnd?.Invoke("You win"); 
+            resultsManager.SetGameData(elapsedTime, score);
+            resultsManager.ShowResults("You win");
+            OnGameEnd?.Invoke("You win");
             enabled = false;
         }
     }
@@ -73,16 +80,54 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void ChangeColorLeft(InputAction.CallbackContext context)
+    {
+        if (context.performed && canChangeColor)
+        {
+            currentColorIndex = (currentColorIndex - 1 + colors.Length) % colors.Length;
+            UpdatePlayerColor();
+        }
+    }
+
+    public void ChangeColorRight(InputAction.CallbackContext context)
+    {
+        if (context.performed && canChangeColor)
+        {
+            currentColorIndex = (currentColorIndex + 1) % colors.Length;
+            UpdatePlayerColor();
+        }
+    }
+
+    private void UpdatePlayerColor()
+    {
+        spriteRenderer.color = colors[currentColorIndex];
+
+        foreach (var enemy in enemies)
+        {
+            if (enemy is ObstacleRed)
+            {
+                ((ObstacleRed)enemy).UpdateMovementState(spriteRenderer.color);
+            }
+            else if (enemy is ObstacleGreen)
+            {
+                ((ObstacleGreen)enemy).UpdateMovementState(spriteRenderer.color);
+            }
+            else if (enemy is ObstacleBlue)
+            {
+                ((ObstacleBlue)enemy).UpdateMovementState(spriteRenderer.color);
+            }
+        }
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            jumpCount = 2;
-        }
-
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             canChangeColor = false;
+        }
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            jumpCount = 2; 
         }
     }
 
@@ -100,11 +145,11 @@ public class PlayerController : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         OnLifeChanged?.Invoke(currentHealth);
 
-        if (currentHealth <= 0) 
+        if (currentHealth <= 0)
         {
-            resultsManager.SetGameData(elapsedTime, score); 
-            resultsManager.ShowResults("Defeat"); 
-            OnGameEnd?.Invoke("Defeat"); 
+            resultsManager.SetGameData(elapsedTime, score);
+            resultsManager.ShowResults("Defeat");
+            OnGameEnd?.Invoke("Defeat");
             enabled = false;
         }
 
@@ -140,29 +185,5 @@ public class PlayerController : MonoBehaviour
     public float GetElapsedTime()
     {
         return elapsedTime;
-    }
-
-    public void ChangeToRed()
-    {
-        if (canChangeColor)
-        {
-            spriteRenderer.color = Color.red;
-        }
-    }
-
-    public void ChangeToGreen()
-    {
-        if (canChangeColor)
-        {
-            spriteRenderer.color = Color.green;
-        }
-    }
-
-    public void ChangeToBlue()
-    {
-        if (canChangeColor)
-        {
-            spriteRenderer.color = Color.blue;
-        }
     }
 }

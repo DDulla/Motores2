@@ -10,6 +10,7 @@ public class ObstacleGreen : MonoBehaviour
 
     public SpriteRenderer spriteRenderer;
     private bool movingToB = true;
+    private bool isPaused = false;
 
     private void Awake()
     {
@@ -18,6 +19,8 @@ public class ObstacleGreen : MonoBehaviour
 
     private void Update()
     {
+        if (isPaused) return;
+
         Vector3 target = movingToB ? pointB : pointA;
         transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
 
@@ -38,5 +41,10 @@ public class ObstacleGreen : MonoBehaviour
                 player.TakeDamage(damage);
             }
         }
+    }
+
+    public void UpdateMovementState(Color playerColor)
+    {
+        isPaused = (playerColor == obstacleColor);
     }
 }
